@@ -1,0 +1,15 @@
+# ROMs con copyright ignoradas. Solo se versiona .gitkeep.
+*.z64
+*.n64
+*.v64
+*.zip
+!core/assets.zip
+*.7z
+# saves locales
+*.srm
+*.sav
+*.state
+# núcleo descargado (se puede versionar si quieres, pero pesa 3MB)
+# descomenta si prefieres no subirlo:
+# core/n64wasm.wasm
+# core/assets.zip

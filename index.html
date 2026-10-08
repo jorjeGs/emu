@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Emu N64 — Ocarina + Banjo</title>
+<style>
+  :root { color-scheme: dark; }
+  body { font-family: system-ui, sans-serif; background:#0b0e14; color:#f2f4f8; margin:0; padding:24px; font-size:19px; line-height:1.5; }
+  h1 { font-size:32px; margin:0 0 8px; }
+  .sub { color:#aeb8c6; margin-bottom:20px; }
+  .grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(280px,1fr)); gap:16px; max-width:900px; }
+  .card { background:#151b26; border:2px solid #2a3446; border-radius:16px; padding:20px; }
+  .card h2 { margin:0 0 6px; font-size:24px; }
+  .card p { margin:6px 0 14px; color:#c4cddb; }
+  .btn { display:inline-block; font-size:21px; font-weight:700; padding:14px 22px; border-radius:12px; border:0; cursor:pointer; background:#3b82f6; color:white; text-decoration:none; margin:4px 6px 4px 0; }
+  .btn.sec { background:#223046; border:2px solid #3b82f6; }
+  .btn:disabled { opacity:.45; cursor:not-allowed; }
+  .ok { color:#4ade80; font-weight:700; } .falta { color:#fbbf24; font-weight:700; }
+  .panel { max-width:900px; margin-top:18px; background:#111725; border:2px solid #2a3446; border-radius:16px; padding:18px 20px; }
+  code { background:#000; padding:2px 8px; border-radius:8px; }
+  small { color:#9aa6b8; }
+  #padlog { font-family: ui-monospace, monospace; font-size:15px; white-space:pre-wrap; background:#000; padding:12px; border-radius:10px; min-height:70px; }
+</style>
+</head>
+<body>
+<h1>🎮 N64 — Ocarina of Time + Banjo-Kazooie</h1>
+<div class="sub">Elige un juego y juega con el GameSir T4N Lite (XInput, LED1+LED4). Guarda con States antes de apagar.</div>
+
+<div class="grid">
+  <div class="card">
+    <h2>🟢 Zelda: Ocarina of Time</h2>
+    <p>Aventura. Z = fijar objetivo con <b>LT</b>. Ocarina con C-buttons (stick derecho).</p>
+    <div id="st-ocarina">Comprobando…</div><br>
+    <button class="btn" id="play-ocarina">Jugar Ocarina</button>
+    <a class="btn sec" href="core/index.html" target="_blank" rel="noopener">Abrir emulador</a>
+  </div>
+  <div class="card">
+    <h2>🟡 Banjo-Kazooie</h2>
+    <p>Plataformas. Precisión con stick suave. Cámara con C-buttons (stick derecho).</p>
+    <div id="st-banjo">Comprobando…</div><br>
+    <button class="btn" id="play-banjo">Jugar Banjo</button>
+    <a class="btn sec" href="core/index.html" target="_blank" rel="noopener">Abrir emulador</a>
+  </div>
+</div>
+
+<div class="panel">
+  <h3>🎛️ Control GameSir T4N Lite</h3>
+  <div id="padstatus">Sin control detectado. Conéctalo por USB-C o dongle 2.4G y pulsa cualquier botón.</div>
+  <div id="padlog"></div>
+  <p><small>Modo correcto: <b>LED1+LED4 fijos = XInput</b>. Si ves LED1+LED3 es DInput: mantén Home 5s. Chrome lo muestra como <code>Xbox 360 Controller (XINPUT)</code>. LT=Z, RT=R, Start=Menu, stick der=C. Detalle en <code>docs/CONTROLES.md</code>.</small></p>
+</div>
+
+<div class="panel">
+  <h3>📂 Probar sin servidor (con tu dump propio)</h3>
+  <p>Si aún no subiste los <code>.z64</code> al servidor, elige el archivo local y se abre en el emulador:</p>
+  <input type="file" id="localrom" accept=".z64,.n64,.v64" style="font-size:18px">
+  <p><small>Solo USA <code>.z64</code>. El archivo no se sube a ningún lado, corre en tu laptop. Para modo permanente cópialo a <code>roms/ocarina.z64</code> y <code>roms/banjo.z64</code>.</small></p>
+</div>
+
+<div class="panel">
+  <h3>💾 Saves</h3>
+  <p>Ocarina usa SRAM, Banjo EEPROM: el emulador los guarda solo en este navegador. Además usa <b>Save State</b> antes de cerrar, y expórtalo si cambias de laptop.</p>
+  <p><small>Atajos: <code>Ctrl+1</code> guardar, <code>Ctrl+2</code> cargar, <code>Ctrl+3</code> sonido, <code>Ctrl+F</code> pantalla completa. Pulsa una vez la página para activar audio.</small></p>
+</div>
+
+<script src="config/romlist.js"></script>
+<script src="config/gamesir-t4n-lite.js"></script>
+<script>
+async function existe(url){
+  try { const r = await fetch(url, {method:'HEAD'}); return r.ok; } catch(e){ return false; }
+}
+async function estado(){
+  const items = (typeof ROMLIST !== 'undefined') ? ROMLIST : [];
+  for (const it of items) {
+    const ok = await existe(it.url);
+    const el = it.url.includes('ocarina') ? document.getElementById('st-ocarina') : document.getElementById('st-banjo');
+    const btn = it.url.includes('ocarina') ? document.getElementById('play-ocarina') : document.getElementById('play-banjo');
+    if (ok) { el.innerHTML = '<span class="ok">● Disponible en servidor</span> <small>'+it.url+'</small>'; }
+    else { el.innerHTML = '<span class="falta">● Falta subir dump</span> <small>'+it.url+' — usa carga local abajo</small>'; btn.disabled = false; }
+    btn.onclick = () => {
+      // El core original N64Wasm expone carga por archivo; si no hay ROM en servidor,
+      // abrimos su UI y el usuario usa "Choose file". Si sí hay, intentamos deep-link.
+      if (ok) window.open('core/index.html', '_blank');
+      else { document.getElementById('localrom').click(); alert('Elige tu dump .z64 propio en el selector de archivo.'); }
+    };
+  }
+  const coreOk = await existe('core/n64wasm.js');
+  if (!coreOk) {
+    const d = document.createElement('div');
+    d.className = 'panel';
+    d.innerHTML = '<b>Falta el núcleo.</b> Ejecuta <code>powershell -ExecutionPolicy Bypass -File scripts/fetch-core.ps1</code> y re-despliega. Es MIT de nbarkhina/N64Wasm.';
+    document.body.appendChild(d);
+  }
+}
+estado();
+
+// Monitor Gamepad API (solo lectura, ideal para T4N Lite)
+const st = document.getElementById('padstatus'), log = document.getElementById('padlog');
+setInterval(() => {
+  const pads = navigator.getGamepads ? navigator.getGamepads() : [];
+  const gp = [...pads].find(Boolean);
+  if (!gp) { st.textContent = 'Sin control detectado. Conéctalo por USB-C o dongle 2.4G y pulsa cualquier botón.'; log.textContent=''; return; }
+  st.innerHTML = '<span class="ok">● Conectado:</span> ' + gp.id + ' — ' + gp.buttons.length + ' botones, ' + gp.axes.length + ' ejes';
+  const b = gp.buttons.map((x,i)=> x.pressed ? i : null).filter(x=>x!==null).join(',');
+  log.textContent = 'pressed:[' + b + ']\naxes:[' + [...gp.axes].map(v=>v.toFixed(2)).join(', ') + ']\nLT=' + (gp.buttons[6]?gp.buttons[6].value.toFixed(2):'-') + ' RT=' + (gp.buttons[7]?gp.buttons[7].value.toFixed(2):'-');
+}, 250);
+window.addEventListener('gamepadconnected', e => console.log('pad', e.gamepad.id));
+document.getElementById('localrom').addEventListener('change', ev => {
+  const f = ev.target.files[0]; if (!f) return;
+  alert('Archivo "' + f.name + '" listo (' + Math.round(f.size/1048576) + 'MB). Ahora abre "Abrir emulador" y usa Choose File para cargarlo. En el próximo paso lo dejamos autocargado.');
+  window.open('core/index.html', '_blank');
+});
+</script>
+</body>
+</html>
