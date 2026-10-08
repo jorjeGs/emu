@@ -1,5 +1,5 @@
 FROM nginx:alpine
-COPY index.html /usr/share/nginx/html/index.html
+COPY index.html ejs.html /usr/share/nginx/html/
 COPY config/ /usr/share/nginx/html/config/
 COPY core/ /usr/share/nginx/html/core/
 COPY roms/ /usr/share/nginx/html/roms/

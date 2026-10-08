@@ -11,12 +11,16 @@ Emulador web ligero N64 (Ocarina of Time + Banjo-Kazooie) para jugar en laptop c
 ```
 emu/
   index.html              -> launcher simple en español (2 tarjetas grandes)
+  ejs.html                -> vía EmulatorJS estilo rec0ded88 (n64, gamepad virtual N64, fullscreen)
   config/romlist.js       -> lista de ROMs en roms/
+  config/ejs-config.js    -> config EJS compartida (virtual gamepad, CDN/self-host)
   config/gamesir-t4n-lite.js -> mapeo recomendado
   roms/                   -> aquí van TUS dumps propios .z64 (no se suben a git)
   core/                   -> n64wasm.js/.wasm/assets.zip etc (MIT, se descarga con script)
+  ejs-data/ (opcional)    -> data/ EmulatorJS self-host (scripts/fetch-ejs.*)
   Dockerfile, docker-compose.yml, nginx.conf
   docs/CONTROLES.md
+  docs/ANALISIS-rec0ded88.md -> qué copiamos de rec0ded88 (solo config, sin ROMs)
 ```
 
 ## Puesta en marcha (5 min)

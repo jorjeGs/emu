@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jugar N64 — vía EmulatorJS</title>
+<style>
+  :root { color-scheme: dark; }
+  body { font-family: system-ui, sans-serif; background:#0b0e14; color:#f2f4f8; margin:0; padding:24px; font-size:19px; }
+  h1 { font-size:30px; margin:0 0 6px; }
+  .sub { color:#aeb8c6; margin-bottom:16px; max-width:900px; }
+  .grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(260px,1fr)); gap:14px; max-width:900px; margin-bottom:16px; }
+  .card { background:#151b26; border:2px solid #2a3446; border-radius:16px; padding:18px; }
+  .btn { display:inline-block; font-size:20px; font-weight:700; padding:12px 20px; border-radius:12px; border:0; cursor:pointer; background:#22c55e; color:#06130b; margin:4px 6px 4px 0; }
+  .btn.sec { background:#223046; color:#fff; border:2px solid #22c55e; }
+  #game { width:100%; max-width:960px; height:72vh; min-height:480px; background:#000; border-radius:12px; }
+  code { background:#000; padding:2px 8px; border-radius:8px; }
+  small { color:#9aa6b8; }
+</style>
+</head>
+<body>
+<h1>🎮 Jugar N64 — EmulatorJS</h1>
+<div class="sub">Vía alternativa a <code>core/</code> N64Wasm, con el mismo patrón que rec0ded88: núcleo <code>n64</code>, gamepad físico plug-n-play + gamepad virtual N64, fullscreen auto. Elige juego con dump propio en <code>roms/</code>.</div>
+
+<div class="grid">
+  <div class="card">
+    <h2>🟢 Ocarina of Time</h2>
+    <p><small>roms/ocarina.z64 (o .zip) — dump propio USA.</small></p>
+    <button class="btn" id="b-ocarina">Jugar Ocarina</button>
+  </div>
+  <div class="card">
+    <h2>🟡 Banjo-Kazooie</h2>
+    <p><small>roms/banjo.z64 (o .zip) — dump propio USA.</small></p>
+    <button class="btn" id="b-banjo">Jugar Banjo</button>
+  </div>
+</div>
+
+<div id="game"></div>
+<p><small>Control: GameSir T4N Lite en XInput (LED1+LED4). Si no hay ROM en servidor, usa <a href="index.html">volver al launcher</a> y carga archivo local. Saves y states los gestiona EmulatorJS en el navegador. Sin ROMs no hay juego: este repo no incluye ROMs con copyright.</small></p>
+<p><a class="btn sec" href="index.html">← Volver</a></p>
+
+<script src="config/romlist.js"></script>
+<script src="config/ejs-config.js"></script>
+<script>
+function pickUrl(base) {
+  // admite .z64 directo o .zip con el z64 dentro
+  return base;
+}
+async function existe(url) {
+  try { const r = await fetch(url, { method: "HEAD" }); return r.ok; } catch (e) { return false; }
+}
+async function jugar(gameName, candidates) {
+  for (const u of candidates) {
+    if (await existe(u)) {
+      document.getElementById("game").innerHTML = "";
+      EJS_buildConfig({ gameUrl: u, gameName: gameName });
+      try { await EJS_load(); }
+      catch (e) { alert("Fallo cargando EmulatorJS CDN. Revisa internet o haz self-host de ejs-data/ (scripts/fetch-ejs)."); }
+      else document.getElementById("game").scrollIntoView();
+      return;
+    }
+  }
+  alert("No hay dump en servidor para " + gameName + ". Sube uno propio a roms/ (" + candidates.join(" o ") + ").");
+}
+document.getElementById("b-ocarina").onclick = () => jugar("Ocarina of Time", ["roms/ocarina.z64", "roms/ocarina.zip"]);
+document.getElementById("b-banjo").onclick = () => jugar("Banjo-Kazooie", ["roms/banjo.z64", "roms/banjo.zip"]);
+// auto: ?jugar=ocarina|banjo
+const q = new URLSearchParams(location.search).get("jugar");
+if (q === "ocarina") document.getElementById("b-ocarina").click();
+if (q === "banjo") document.getElementById("b-banjo").click();
+</script>
+</body>
+</html>
